@@ -42,8 +42,8 @@ function onUnlocked() {
 
 /**
  * 刮卡底图：走 CSS background-image，<picture> 对它无效，
- * 所以按特性直接选URL（WebP 版省 76%：295KB → 71KB）。
- * 这是**首屏第一张图**，省下的字节最值钱。
+ * 所以按特性直接选URL。这是**首屏第一张图**，字节数最值钱
+ * （scratch 即 p14 那张，源图只有 500×750：jpg 24KB / webp 17KB，都很小）。
  */
 const scratchBg = computed(() => (webpSupported ? photos.scratchWebp : props.photo))
 
@@ -130,15 +130,14 @@ function skip() {
    */
   padding-top: min(120px, 16vh);
   /*
-   * 暗色压到 45%：62% 时人物轮廓太暗，脸几乎看不清。
+   * 暗色压到 45%：p14 是亮调暖金色照片，压暗后卡片与「跳过」按钮更突出，
+   * 同时盖住 500×750 源图全屏放大后的发软。
    *
-   * 横向 65% 是算出来的，不要随手改：
-   * 用 canvas 逐行扫描底图亮度得出人物头部中心在原图 x≈970（宽 1600，即 60.6%），
-   * 令该中心对齐屏幕中心，background-position = C·s − W/2 / (1600·s − W)，
-   * 在 390×844 与 430×932 上都收敛到 65.3%，故取 65%。
+   * 横向 50%：p14 两人脸部中心分别在原图 x≈30% / 67%，取中点≈48%，
+   * 50% 即可让两人都落在画面里（cover 只横向裁掉约 15% 一侧）。
    */
   background: linear-gradient(rgba(6, 9, 13, 0.45), rgba(6, 9, 13, 0.45)),
-    var(--scratch-bg) 65% 50% / cover no-repeat;
+    var(--scratch-bg) 50% 50% / cover no-repeat;
 }
 .scratch-box {
   width: 300px;

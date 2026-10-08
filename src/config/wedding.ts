@@ -150,7 +150,7 @@ export const gallery: Photo[] = PHOTO_IDS.map((id) => ({
 }))
 
 export const photos = {
-  /** 刮卡遮罩层的整屏底图（夕阳剪影，暗色压着轮廓最好看） */
+  /** 刮卡遮罩层的整屏底图（p14：暖金色逆光合照） */
   scratch: `${BASE}photos/scratch.jpg`,
   /** 刮卡底图的 WebP：这是**首屏**第一张图，省下的字节最值钱 */
   scratchWebp: `${BASE}photos/scratch.webp`,

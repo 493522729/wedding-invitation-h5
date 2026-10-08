@@ -1,0 +1,38 @@
+MIT License
+
+Copyright (c) 2026 wedding-invite-template contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+FONTS (字体许可，与本项目代码的 MIT 许可不同)
+
+本项目分发以下字体，均为 SIL Open Font License 1.1，允许商用与再分发：
+  - Cormorant Garamond（倒计时数字）  © Catharsis Fonts
+  - LXGW WenKai / 霞鹜文楷（邀请辞）  © LXGW
+  - ZCOOL KuaiLe / 站酷快乐体（姓名）    © ZCOOL
+
+OFL 1.1 允许嵌入网页与再分发，但要求保留 OFL 全文且不得单独售卖字体。
+字体文件的完整许可见 public/fonts/README.md。
+
+PHOTOS (照片)
+
+public/photos/ 下为**程序生成的占位图**（纯色渐变 + 文字），
+不含任何真实人物或第三方作品，可自由替换。

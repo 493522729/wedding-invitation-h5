@@ -1,0 +1,450 @@
+/* ============ 字体 ============ */
+/* 标题走宋体系（衬线，有婚礼的仪式感），正文用苹方。
+   全部为系统字体，无需联网加载 —— 避免 webfont 加载完成改变布局、
+   导致刮卡 canvas 像素与显示尺寸错位的问题。 */
+:root {
+  --font-serif: 'Songti SC', 'STSong', 'Source Han Serif SC', 'Noto Serif CJK SC',
+    'Times New Roman', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue',
+    'Microsoft YaHei', sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
+  /**
+   * 姓名专用字体：站酷快乐体（ZCOOL KuaiLe）。
+   *
+   * 授权：SIL Open Font License 1.1，允许商用（本项目为婚礼请柬，
+   * 会被公开分发，必须用可商用字体）。
+   *
+   * 体积：原始字体 1.12MB，直接引入会让微信首屏明显变慢。
+   * 这里只保留 111 个字形（姓名 + 婚庆场景高频字），
+   * 子集化后 19.9KB，压缩 55 倍。代价是字体外的字会回退到后备字体 ——
+   * 新人若改名后字形不在子集内，需重新执行子集化。
+   */
+  --font-name: 'WeddingNames', 'Songti SC', 'STSong', 'PingFang SC', serif;
+  /**
+   * 倒计时数字字体：Cormorant Garamond Italic（SIL OFL，可商用）。
+   *
+   * 为什么不用 Marker Felt：它是商业字体（Dave Fleming 设计），
+   * 随 macOS 授权分发，不能打包进请柬给宾客 —— 属于字体授权问题。
+   * 且即使只写 CSS 引用，也只有装了它的 Mac 会显示，其他设备全部回退。
+   *
+   * 换成衬线斜体而非马克笔体：马克笔（Permanent Marker）偏活泼，
+   * 与请柬整体的古典感不搭；衬线斜体更接近传统请帖的数字。
+   *
+   * 体积：原字体 23KB，子集化到只剩 0-9 与冒号后 3.8KB。
+   */
+  --font-countdown: 'WeddingCountdown', 'Cormorant Garamond', 'Times New Roman', serif;
+  /** 邀请辞字体：霞鹜文楷（SIL OFL，可商用），楷体有传统书卷气 */
+  --font-invite: 'WeddingWords', 'Songti SC', 'STSong', serif;
+  /**
+   * 底部报名栏的总高度（含安全区），页脚留白与栏高共用这一个值。
+   * = 上下内边距 8×2 + 按钮 50 + 安全区。
+   * 改按钮高度时**必须同步改这里**，否则页脚留白会对不上。
+   * 单点定义，避免两处各写一个数字而对不上。
+   */
+  --dock-h: calc(66px + env(safe-area-inset-bottom, 0px));
+}
+
+/**
+ * 三个字体都已在 index.html 里 preload，与 CSS 并行下载。
+ * 因此 swap 的「先后备、后替换」触发概率已经很低，保留它作为兜底：
+ * 万一 preload 失败（极弱网），swap 至少让文字可读，不会一直空白。
+ */
+@font-face {
+  font-family: 'WeddingCountdown';
+  src: url('/fonts/countdown.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  /*
+   * 唯一用 block 的字体：倒计时数字每秒都在跳，字体从后备切到
+   * Cormorant 时整块字形会肉眼可见地抖一下 —— 这是全站最扎眼的跳变。
+   * block 的取舍是「加载期文字不可见」换「零跳变」，只有 3.8KB +
+   * preload，加载期短到看不见；期间页面上其他文字照常显示。
+   * 代价：极端情况下（字体请求失败）这行会空白约 3s 后回退，
+   * 相比整块数字跳变，这个代价明显更小。
+   * 不要改回 swap。
+   */
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'WeddingWords';
+  src: url('/fonts/invite-words.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  /*
+   * 邀请辞是整段正文，保持 swap：13.4KB 在跨境链路上不算小，
+   * 用block 会让整段文字空白上百毫秒，比换字体难看得多。
+   */
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'WeddingNames';
+  /* 相对 public/ 的路径；用绝对路径以免受部署 base 影响 */
+  src: url('/fonts/wedding-names-subset.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  /* 21KB，且只在刮卡解锁后才出现，同样保持 swap 兜底 */
+  font-display: swap;
+}
+
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html,
+body {
+  background: #0a0e14;
+  color: #e6edf3;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  width: 100%;
+  min-height: 100%;
+}
+/* 只在锁定的刮卡层屏蔽滚动穿透；页面本身必须能正常滚动，
+   否则相册页会被卡住无法翻页 */
+/*
+ * 全局禁用浏览器级缩放。
+ *
+ * pan-x pan-y = 允许单指横向/纵向滑动，禁掉 pinch-zoom 与 double-tap zoom。
+ * 三者区别很关键，选错就出问题：
+ *   auto        —— 什么都不禁（双指捏大 + 双击局部放大都生效）
+ *   manipulation—— 禁 double-tap，但**允许 pinch-zoom**（捏大照样能）
+ *   pan-y       —— 禁 pinch，但同时禁掉横向平移，轮播左右滑动会失效
+ *   pan-x pan-y —— 正是要的：缩放全禁，双向滚动保留
+ *
+ * 必须落在 html 上：touch-action 不是继承属性，写在 body 只作用于 body
+ * 自身的触摸区域，对子元素的命中测试不生效。
+ *
+ * main.ts 的 guardPinchZoom 是兜底 —— iOS 微信对 touch-action 的执行
+ * 并不完全可靠，实测仍有偶发漏窗（所以双管齐下，而不是只靠 JS）。
+ */
+html {
+  touch-action: pan-x pan-y;
+}
+
+body {
+  overscroll-behavior-y: none;
+  /*
+   * 单列只需禁用双击缩放即可（html 层已把 pinch-zoom 一起禁掉）。
+   * manipulation 保留在此作为双保险：个别内核只认 body 上的值。
+   *
+   * 与底图缩放是同一个问题的两面：双击把视口缩放状态改了，
+   * 从相册返回时 fixed 的底图按新视口重算，就出现整张图「缩放」。
+   * 禁掉根因即可，不必去动 background-size。
+   */
+  touch-action: manipulation;
+}
+
+/*
+ * 整屏底图。
+ *
+ * 曾经用 body::before + background-image，但 iOS Safari 滚动时
+ * 地址栏收起/展开会改变视口高度，fixed 伪元素随之重算
+ * background-size: cover，表现为「下滚放大、上滚缩回」。
+ * 改用 <img> + object-fit: cover，缩放交给浏览器处理，不受此影响。
+ *
+ * inset: 0 而非 100vh：vh 在移动端指「地址栏展开时」的视口，
+ * 会比实际可见区域高出一截，从而多出可滚动的高度。
+ * inset 由布局直接给出真实视口尺寸，更准。
+ */
+.page-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* 与刮卡层同一位置值，两处人物对齐 */
+  object-position: 50% 50%;
+  /* 装饰性图片，不参与无障碍树 */
+  user-select: none;
+}
+/*
+ * 蒙版单独一层。
+ * 0.58 是权衡值：底图是明亮的合照，压太浅则姓名与倒计时
+ * 正好落在白色婚纱上、对比度不足；压太深又看不出是照片。
+ */
+.page-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 9, 13, 0.58);
+  pointer-events: none;
+}
+
+/*
+ * 详情页整屏底图。
+ *
+ * 蒙版 0.58 是权衡值：底图是明亮的合照，压太浅则姓名与倒计时
+ * 正好落在白色婚纱上、对比度不足；压太深又看不出是照片。
+ *
+ * 关于 iOS 上「下滚时底图放大、上滚时缩回」：
+ * 地址栏收起/展开会改变视口高度，fixed 元素随之重算
+ * background-size: cover。will-change 只能让它跳得不那么明显。
+ * 曾改用 <img> + object-fit 彻底规避，但 <img> 有固有宽高比，
+ * 在灯箱里会被容器裁切（照片显示不全），权衡后恢复此方案 ——
+ * 灯箱显示完整比背景缩放平顺更重要。
+ *
+ * --page-bg 由 App.vue 运行时注入，避免在 CSS 里写死部署 base。
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  will-change: transform;
+  background-image: linear-gradient(rgba(6, 9, 13, 0.58), rgba(6, 9, 13, 0.58)),
+    var(--page-bg, none);
+  background-size: cover;
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+#app {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  /*
+   * 必须用 dvh（动态视口高度），不能用 vh。
+   * vh 在移动端指的是「地址栏完全展开时」的视口，比用户实际看到的
+   * 区域高出一截（iPhone 上约 100px），于是页面「超高」而能上下滚动 ——
+   * 内容只有终端那一点、本该刚好一屏，却出现了滚动条。
+   * dvh 会把地址栏占位算进去，等于真实可见高度。
+   * 前一行 100vh 是旧内核回退（不支持 dvh 时至少不塌陷）。
+   */
+  min-height: 100dvh;
+  position: relative;
+  /* 必须高于 .page-bg（z-index:0），否则内容被背景盖住 */
+  z-index: 1;
+}
+img {
+  display: block;
+  max-width: 100%;
+}
+
+/**
+ * 消除移动端的 300ms 点击延迟。
+ *
+ * 这个延迟来自 Safari 早年等待判断「用户是不是在双击缩放」的历史包袱。
+ * 之前为满足 WCAG 1.4.4 移除了 user-scalable=no，延迟就跟着回来了 ——
+ * 表现为「点一下没反应，过一会儿才跳转」，很容易被误认为是加载卡顿。
+ *
+ * manipulation 明确告诉浏览器：只处理点击与滚动，不等双击缩放判定。
+ * 它不会禁用缩放，可访问性不受影响。
+ */
+button,
+a,
+[role='button'],
+label {
+  touch-action: manipulation;
+}
+
+/* 键盘可达性：按钮默认 outline 在深色背景上几乎不可见，统一给出焦点环 */
+:focus-visible {
+  outline: 2px solid #e8c27a;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+/*
+ * 蒙版单独一层。
+ * 0.58 是权衡值：底图是明亮的合照，压太浅则姓名与倒计时
+ * 正好落在白色婚纱上、对比度不足；压太深又看不出是照片。
+ */
+.page-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 9, 13, 0.58);
+  pointer-events: none;
+}
+
+#app {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  /*
+   * 必须用 dvh（动态视口高度），不能用 vh。
+   * vh 在移动端指的是「地址栏完全展开时」的视口，比用户实际看到的
+   * 区域高出一截（iPhone 上约 100px），于是页面「超高」而能上下滚动 ——
+   * 内容只有终端那一点、本该刚好一屏，却出现了滚动条。
+   * dvh 会把地址栏占位算进去，等于真实可见高度。
+   * 前一行 100vh 是旧内核回退（不支持 dvh 时至少不塌陷）。
+   */
+  min-height: 100dvh;
+  position: relative;
+  /* 必须高于 .page-bg（z-index:0），否则内容被背景盖住 */
+  z-index: 1;
+}
+img {
+  display: block;
+  max-width: 100%;
+}
+
+/**
+ * 消除移动端的 300ms 点击延迟。
+ *
+ * 这个延迟来自 Safari 早年等待判断「用户是不是在双击缩放」的历史包袱。
+ * 之前为满足 WCAG 1.4.4 移除了 user-scalable=no，延迟就跟着回来了 ——
+ * 表现为「点一下没反应，过一会儿才跳转」，很容易被误认为是加载卡顿。
+ *
+ * manipulation 明确告诉浏览器：只处理点击与滚动，不等双击缩放判定。
+ * 它不会禁用缩放，可访问性不受影响。
+ */
+button,
+a,
+[role='button'],
+label {
+  touch-action: manipulation;
+}
+
+/* 键盘可达性：按钮默认 outline 在深色背景上几乎不可见，统一给出焦点环 */
+:focus-visible {
+  outline: 2px solid #e8c27a;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+#app {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  /*
+   * 必须用 dvh（动态视口高度），不能用 vh。
+   * vh 在移动端指的是「地址栏完全展开时」的视口，比用户实际看到的
+   * 区域高出一截（iPhone 上约 100px），于是页面「超高」而能上下滚动 ——
+   * 内容只有终端那一点、本该刚好一屏，却出现了滚动条。
+   * dvh 会把地址栏占位算进去，等于真实可见高度。
+   * 前一行 100vh 是旧内核回退（不支持 dvh 时至少不塌陷）。
+   */
+  min-height: 100dvh;
+  position: relative;
+  /* 必须高于 .page-bg（z-index:0），否则内容被背景盖住 */
+  z-index: 1;
+}
+img {
+  display: block;
+  max-width: 100%;
+}
+
+/**
+ * 消除移动端的 300ms 点击延迟。
+ *
+ * 这个延迟来自 Safari 早年等待判断「用户是不是在双击缩放」的历史包袱。
+ * 之前为满足 WCAG 1.4.4 移除了 user-scalable=no，延迟就跟着回来了 ——
+ * 表现为「点一下没反应，过一会儿才跳转」，很容易被误认为是加载卡顿。
+ *
+ * manipulation 明确告诉浏览器：只处理点击与滚动，不等双击缩放判定。
+ * 它不会禁用缩放，可访问性不受影响。
+ */
+button,
+a,
+[role='button'],
+label {
+  touch-action: manipulation;
+}
+
+/* 键盘可达性：按钮默认 outline 在深色背景上几乎不可见，统一给出焦点环 */
+:focus-visible {
+  outline: 2px solid #e8c27a;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+/*
+ * 蒙版单独一层。
+ * 0.58 是权衡值：底图是明亮的合照，压太浅则姓名与倒计时
+ * 正好落在白色婚纱上、对比度不足；压太深又看不出是照片。
+ */
+.page-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 9, 13, 0.58);
+  pointer-events: none;
+}
+
+#app {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  /*
+   * 必须用 dvh（动态视口高度），不能用 vh。
+   * vh 在移动端指的是「地址栏完全展开时」的视口，比用户实际看到的
+   * 区域高出一截（iPhone 上约 100px），于是页面「超高」而能上下滚动 ——
+   * 内容只有终端那一点、本该刚好一屏，却出现了滚动条。
+   * dvh 会把地址栏占位算进去，等于真实可见高度。
+   * 前一行 100vh 是旧内核回退（不支持 dvh 时至少不塌陷）。
+   */
+  min-height: 100dvh;
+  position: relative;
+  /* 必须高于 .page-bg（z-index:0），否则内容被背景盖住 */
+  z-index: 1;
+}
+img {
+  display: block;
+  max-width: 100%;
+}
+
+/**
+ * 消除移动端的 300ms 点击延迟。
+ *
+ * 这个延迟来自 Safari 早年等待判断「用户是不是在双击缩放」的历史包袱。
+ * 之前为满足 WCAG 1.4.4 移除了 user-scalable=no，延迟就跟着回来了 ——
+ * 表现为「点一下没反应，过一会儿才跳转」，很容易被误认为是加载卡顿。
+ *
+ * manipulation 明确告诉浏览器：只处理点击与滚动，不等双击缩放判定。
+ * 它不会禁用缩放，可访问性不受影响。
+ */
+button,
+a,
+[role='button'],
+label {
+  touch-action: manipulation;
+}
+
+/* 键盘可达性：按钮默认 outline 在深色背景上几乎不可见，统一给出焦点环 */
+:focus-visible {
+  outline: 2px solid #e8c27a;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

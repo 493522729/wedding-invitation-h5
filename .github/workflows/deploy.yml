@@ -1,0 +1,49 @@
+name: 部署 GitHub Pages 预览
+
+# main 推送即用 GitHub Pages 重新发布预览（project site，地址 /wedding-invitation-h5/）
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  # 同一分支的并发部署只保留最新一次
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: 类型检查并构建
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: 安装依赖
+        run: npm ci
+      # build 脚本里已串了 vue-tsc --noEmit，类型错误会在这里挡住部署
+      # base 必须匹配 project site 的子路径 /wedding-invitation-h5/
+      - name: 构建
+        run: npm run build -- --base=/wedding-invitation-h5/
+      - name: 上传 Pages 产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: 发布到 GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

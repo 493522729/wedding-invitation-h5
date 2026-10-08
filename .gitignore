@@ -1,0 +1,29 @@
+node_modules/
+dist/
+
+# 本地环境变量（含微信 AppSecret，不入库）
+.env
+.env.local
+.env.*.local
+
+.DS_Store
+*.log
+.idea/
+.vscode/
+
+# 签名接口的部署包（含构建产物，不入库）
+deploy/wx-sign/*.zip
+
+# Python 虚拟环境：跑 scripts/ 下的图像脚本时在项目内建的环境，
+# 体积大且与平台相关，绝不能入库。临时用完直接删，需要时重建：
+#   python3 -m venv .venv && .venv/bin/pip install Pillow
+# 写法要点：前面不能加 /，否则只匹配根目录；venv 也不加前导 .，
+# 才能同时覆盖 .venv / .imgvenv2 / foo.venv 这类任意前缀命名。
+.venv/
+imgvenv*/
+*venv*/
+*venv/
+
+# Python 缓存
+__pycache__/
+*.pyc

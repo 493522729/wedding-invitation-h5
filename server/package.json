@@ -1,0 +1,10 @@
+{
+  "name": "wedding-rsvp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "婚礼 RSVP 报名服务。独立 compose 项目，由前置 nginx 反代到静态站点。",
+  "main": "rsvp-server.cjs",
+  "scripts": {
+    "start": "node rsvp-server.cjs"
+  }
+}

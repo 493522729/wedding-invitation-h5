@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="theme-color" content="#0a0e14" />
+    <title>新郎 & 新娘 · 婚礼邀请</title>
+    <!--
+      透明分享兜底：微信未配置 JS-SDK 签名时靠这些 meta 生成卡片。
+      这里的文案是静态副本，实际分享内容以 src/config/wedding.ts 为准。
+    -->
+    <meta name="description" content="2026年10月25日（周日）· 示例大酒店" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="新郎 ❤ 新娘 邀请您见证我们的婚礼" />
+    <meta property="og:description" content="2026年10月25日（周日）· 示例大酒店" />
+    <meta property="og:image" content="https://your-domain.com/wedding/share-cover.jpg" />
+    <meta property="og:url" content="https://your-domain.com/wedding/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/png" href="%BASE_URL%favicon.png" />
+    <link rel="apple-touch-icon" href="%BASE_URL%apple-touch-icon.png" />
+    <!--
+      字体预加载：消除倒计时数字的字体跳变。
+
+      不写 preload 时的链路是HTML → 下载 CSS → 解析 CSS → 才发现
+      @font-face → 才发起字体请求。跨境链路上这一趟必然慢于首屏渲染，
+      font-display: swap 于是先用后备字体画一遍，字体到位后再跳变 ——
+      倒计时每秒都在跳，字体一换整个数字块会肉眼可见地抖一下。
+
+      preload 让字体与 CSS 并行下载，能在首屏渲染前就位。
+      三个字体合计 38KB，代价可忽略。
+
+      crossorigin 必须加：字体始终以 CORS 模式请求（同源也一样），
+      少了它preload 的那个请求不会被复用，等于下两次。
+
+      路径写成 /fonts/xxx，Vite 构建时会自动补base 前缀，
+      与 style.css 里的写法保持一致（换成独立子域部署时只改 vite.config）。
+    -->
+    <link rel="preload" href="/fonts/countdown.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/invite-words.woff2" as="font" type="font/woff2" crossorigin />
+    <link
+      rel="preload"
+      href="/fonts/wedding-names-subset.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
